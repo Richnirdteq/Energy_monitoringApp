@@ -1,9 +1,15 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
 
 class BaseConfig:
+    # Security
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
-    SECURITY_PASSWORD_SALT = os.environ.get("SECURITY_PASSWORD_SALT", "dev-password-salt")  # ← ADD THIS
+    SECURITY_PASSWORD_SALT = os.environ.get("SECURITY_PASSWORD_SALT", "dev-password-salt")
 
+    # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///site.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -18,7 +24,7 @@ class DevelopmentConfig(BaseConfig):
     MAIL_USERNAME = None
     MAIL_PASSWORD = None
     MAIL_DEFAULT_SENDER = ("Energy Tracker Dev", "noreply@example.com")
-    MAIL_SUPPRESS_SEND = False  # ensure emails are actually sent to local SMTP
+    MAIL_SUPPRESS_SEND = False  # Emails are sent locally for testing
 
 class ProductionConfig(BaseConfig):
     MAIL_SERVER = "smtp.gmail.com"
