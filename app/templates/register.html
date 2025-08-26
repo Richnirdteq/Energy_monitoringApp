@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+
+<div class="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+    
+    <!-- App Branding -->
+    <div class="text-center mb-6">
+      <div class="flex justify-center items-center space-x-2">
+        <img src="{{ url_for('static', filename='img/avatar.png') }}" 
+             alt="Energy Tracker Logo" 
+             class="w-12 h-12 rounded-full shadow" />
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white">Energy Tracker</h1>
+      </div>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">Track. Save. Control ⚡</p>
+    </div>
+
+    <!-- Title -->
+    <h2 class="text-xl font-bold text-center text-gray-800 dark:text-gray-200 mb-6">
+      ✨ Create Your Account
+    </h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4 space-y-2">
+          {% for category, message in messages %}
+            <div class="flex items-center p-3 rounded-lg text-sm 
+                        {% if category == 'error' %} bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200
+                        {% elif category == 'success' %} bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200
+                        {% else %} bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 {% endif %}">
+              <span class="mr-2">
+                {% if category == 'error' %} ❌
+                {% elif category == 'success' %} ✅
+                {% else %} ℹ️
+                {% endif %}
+              </span>
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Register Form -->
+    <form method="POST">
+      {{ form.hidden_tag() }}
+
+      <!-- Username -->
+      <div class="mb-4">
+        {{ form.username.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">👤</span>
+          {{ form.username(class="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 
+              focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 
+              text-gray-900 dark:text-gray-100") }}
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-4">
+        {{ form.email.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">📧</span>
+          {{ form.email(class="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 
+              focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 
+              text-gray-900 dark:text-gray-100") }}
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-4">
+        {{ form.password.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔒</span>
+          {{ form.password(
+              id="register-password",
+              class="w-full pl-10 pr-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 
+              focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 
+              text-gray-900 dark:text-gray-100"
+          ) }}
+          <button type="button" 
+                  onclick="togglePassword('register-password', this)" 
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="mb-6">
+        {{ form.confirm_password.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔒</span>
+          {{ form.confirm_password(
+              id="confirm-password",
+              class="w-full pl-10 pr-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 
+              focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 
+              text-gray-900 dark:text-gray-100"
+          ) }}
+          <button type="button" 
+                  onclick="togglePassword('confirm-password', this)" 
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="mb-4">
+        {{ form.submit(class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg 
+    shadow-md transition duration-300 ease-in-out flex items-center justify-center space-x-2") }}
+
+      </div>
+    </form>
+
+    <!-- Extra Links -->
+    <div class="mt-6 flex flex-col space-y-2 text-sm text-center text-gray-600 dark:text-gray-400">
+      <a href="{{ url_for('main.login') }}" class="hover:underline">🔑 Already have an account? <b>Login</b></a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function togglePassword(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  if (input.type === "password") {
+    input.type = "text";
+    btn.textContent = "🙈";
+  } else {
+    input.type = "password";
+    btn.textContent = "👁️";
+  }
+}
+</script>
+
+{% endblock %}

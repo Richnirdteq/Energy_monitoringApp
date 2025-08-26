@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+
+  <!-- Navbar -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+      ⚡ Energy Tracker (Guest Mode)
+    </h1>
+    <div>
+      <a href="{{ url_for('main.login') }}" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Login</a>
+      <a href="{{ url_for('main.register') }}" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Register</a>
+    </div>
+  </div>
+
+  <!-- Welcome -->
+  <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">
+    Welcome, Guest
+  </h2>
+  <p class="mb-6 text-gray-500 dark:text-gray-400">
+    This is a demo dashboard. Data shown below is sample only.
+  </p>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow">
+      <p class="text-sm text-gray-500">Monthly Usage</p>
+      <h3 class="text-xl font-bold">120 kWh</h3>
+    </div>
+    <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow">
+      <p class="text-sm text-gray-500">Estimated Cost</p>
+      <h3 class="text-xl font-bold">$45.60</h3>
+    </div>
+    <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow">
+      <p class="text-sm text-gray-500">Energy Saved</p>
+      <h3 class="text-xl font-bold">15%</h3>
+    </div>
+    <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow">
+      <p class="text-sm text-gray-500">Account</p>
+      <h3 class="text-xl font-bold">Guest Mode</h3>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Daily Usage Line Chart -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+      <h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-4">Daily Usage</h4>
+      <canvas id="dailyUsageChart"></canvas>
+    </div>
+    <!-- Appliance Breakdown Pie Chart -->
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+      <h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-4">Appliance Breakdown</h4>
+      <canvas id="applianceChart"></canvas>
+    </div>
+  </div>
+
+  <!-- CTA Banner -->
+  <div class="bg-blue-600 p-6 rounded-xl text-white text-center">
+    <h3 class="text-lg font-bold mb-2">Want to track your own usage?</h3>
+    <p class="mb-4">Create an account to monitor appliances, set goals, and save energy!</p>
+    <a href="{{ url_for('main.register') }}" class="px-6 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow hover:bg-gray-100">Register Now</a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-8 text-center text-gray-400 text-sm">
+    Demo Mode – some features are disabled.
+  </footer>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Daily Usage Line Chart (sample data)
+  const ctx1 = document.getElementById('dailyUsageChart');
+  new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: ["Day 1","Day 2","Day 3","Day 4","Day 5","Day 6","Day 7"],
+      datasets: [{
+        label: 'Daily Usage (kWh)',
+        data: [12, 15, 18, 10, 20, 14, 16],
+        borderColor: 'rgb(37, 99, 235)',
+        backgroundColor: 'rgba(37, 99, 235, 0.2)',
+        tension: 0.3,
+        fill: true
+      }]
+    }
+  });
+
+  // Appliance Breakdown Pie Chart (sample data)
+  const ctx2 = document.getElementById('applianceChart');
+  new Chart(ctx2, {
+    type: 'pie',
+    data: {
+      labels: ["AC", "Fridge", "Lights", "Other"],
+      datasets: [{
+        data: [40, 25, 20, 15],
+        backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444']
+      }]
+    }
+  });
+</script>
+{% endblock %}

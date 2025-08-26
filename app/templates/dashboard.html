@@ -1,0 +1,829 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - EnergY Consumption Monitoring{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 space-y-8">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="px-4 py-3 rounded-lg text-center font-medium shadow-sm {{ 'bg-red-100 text-red-800 border-l-4 border-red-500' if category == 'error' else 'bg-green-100 text-green-800 border-l-4 border-green-500' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+    <!-- Logout Button -->
+    <form action="{{ url_for('logout') }}" method="POST" class="inline">
+        {{ csrf_token() }}
+        <button type="submit" class="px-4 py-2 bg-red-600 rounded hover:bg-red-700">
+            Logout
+        </button>
+    </form>
+    
+        <!-- Left Side -->
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">⚡ Energy Dashboard</h1>
+            <p class="text-gray-600 dark:text-gray-300">Hello {{ current_user.username }}, track your energy usage efficiently</p>
+        </div>
+
+        <!-- Right Side -->
+        <div class="flex items-center gap-4">
+        
+            <!-- Current Date -->
+            <div class="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                {{ now.strftime('%A, %B %d, %Y') }}
+            </div>
+
+            <!-- Announcements Button -->
+            <button onclick="toggleAnnouncements()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Announcements Modal -->
+    <div id="announcements-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Announcements</h3>
+                <button onclick="toggleAnnouncements()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p class="text-sm text-blue-800 dark:text-blue-200">📢 New feature: Monthly comparison charts are now available!</p>
+                </div>
+                <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p class="text-sm text-green-800 dark:text-green-200">✅ System update: Improved energy calculation accuracy</p>
+                </div>
+                <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <p class="text-sm text-yellow-800 dark:text-yellow-200">⚠️ Maintenance: Scheduled maintenance this weekend</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications and Tips Section -->
+    {% if notifications or tips %}
+    <div class="space-y-4">
+        <!-- Notifications -->
+        {% if notifications %}
+        <div class="space-y-2">
+            {% for note in notifications %}
+                <div class="p-4 rounded-xl bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border border-yellow-200 dark:border-yellow-700/50 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="text-yellow-600 dark:text-yellow-300 mt-0.5">⚠️</div>
+                        <div class="text-yellow-800 dark:text-yellow-200">{{ note }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Energy Tips -->
+        {% if tips %}
+        <div id="energy-tip-card" class="p-5 rounded-2xl bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 border border-green-100 dark:border-gray-600 shadow-lg relative overflow-hidden">
+            <!-- Close Button -->
+            <div class="absolute top-2 right-2">
+                <button id="close-tip-card" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors text-lg">
+                    ✖
+                </button>
+            </div>
+            <div class="flex items-start gap-3">
+                <div class="text-2xl animate-pulse">💡</div>
+                <div>
+                    <h3 class="text-lg font-semibold text-green-800 dark:text-green-200 mb-1">Energy Saving Tip</h3>
+                    <p id="tip-text" class="text-gray-700 dark:text-gray-300">{{ tips[0] }}</p>
+                    <div class="mt-3 flex justify-between items-center">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Personalized based on your usage</span>
+                        <button id="refresh-tip" class="px-3 py-1 text-xs rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors">
+                            🔄 New Tip
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Today's Usage</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ "%.2f"|format(usage_today) }} kWh</p>
+                </div>
+                <div class="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">This Month</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ "%.2f"|format(usage_month) }} kWh</p>
+                </div>
+                <div class="p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Estimated Bill</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-1">₵{{ "%.2f"|format(estimated_bill) }}</p>
+                </div>
+                <div class="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Progress Section -->
+    <div id="goal-section" class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Monthly Goal</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    {% if goal_value %}
+                        Using <span class="font-medium">{{ "%.2f"|format(monthly_usage_kwh) }} kWh</span> of <span class="font-medium">{{ "%.2f"|format(goal_value) }} kWh</span> target
+                    {% else %}
+                        <span class="text-gray-500 dark:text-gray-400">No monthly goal set yet</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <span class="block text-sm text-gray-500 dark:text-gray-400">Progress</span>
+                    <span class="block text-xl font-bold {% if progress_percent >= 100 %}text-red-600{% elif progress_percent >= 80 %}text-yellow-500{% else %}text-green-600{% endif %}">
+                        {{ "%.1f"|format(progress_percent) }}%
+                    </span>
+                </div>
+                {% if appliance_data and appliance_data|length > 0 %}
+                <div class="hidden sm:block text-right">
+                    <span class="block text-sm text-gray-500 dark:text-gray-400">Top Appliances</span>
+                    <span class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                        {{ appliance_data[0][0] }}{% if appliance_data|length > 1 %}, {{ appliance_data[1][0] }}{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="goal-progress" class="mb-5">
+            <div class="h-4 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500 ease-out" 
+                     style="width: {{ progress_percent }}%; 
+                            background: {% if progress_percent >= 100 %} linear-gradient(to right, #ef4444, #f87171)
+                                      {% elif progress_percent >= 80 %} linear-gradient(to right, #f59e0b, #fbbf24)
+                                      {% else %} linear-gradient(to right, #10b981, #34d399) {% endif %};">
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" class="flex flex-col sm:flex-row gap-3">
+            {{ goal_form.hidden_tag() }}
+            <div class="flex-1">
+                {{ goal_form.target_kwh(class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white", placeholder="Enter monthly goal (kWh)") }}
+            </div>
+            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                {{ 'Update Goal' if goal_value else 'Set Goal' }}
+            </button>
+        </form>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Daily Usage Chart -->
+        <div id="daily-chart-section" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Daily Energy Usage</h3>
+                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    Last 30 Days
+                </span>
+            </div>
+            <div class="h-64">
+                <canvas id="dailyUsageChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Appliance Breakdown Chart -->
+        <div id="breakdown-chart-section" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Appliance Breakdown</h3>
+                <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    This Month
+                </span>
+            </div>
+            <div class="h-64">
+                <canvas id="applianceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Comparison Chart Section -->
+    <div id="monthly-chart-section" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Monthly Comparison</h3>
+            <span class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                Current vs Previous Month
+            </span>
+        </div>
+        <div class="h-64">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Data Input Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Add Usage Form -->
+        <div id="add-usage-form" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Add Appliance Usage</h2>
+            
+            {% if form.errors %}
+            <div class="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500">
+                <h3 class="font-bold text-red-800 dark:text-red-200">Please fix these errors:</h3>
+                <ul class="mt-2 text-sm text-red-700 dark:text-red-300 space-y-1">
+                    {% for field, errors in form.errors.items() %}
+                        {% for error in errors %}
+                            <li class="flex items-start gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                                <span>{{ form[field].label.text }}: {{ error }}</span>
+                            </li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{{ url_for('main.add_appliance_usage') }}">
+                {{ form.hidden_tag() }}
+                <div class="space-y-4">
+                    <div>
+                        {{ form.appliance.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1") }}
+                        <select name="{{ form.appliance.name }}" id="appliance-select" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white">
+                            {% for group_name, items in grouped %}
+                                {% if group_name %}
+                                    <optgroup label="{{ group_name }}">
+                                        {% for value, label in items %}
+                                            <option value="{{ value }}" {% if form.appliance.data == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% else %}
+                                    {% for value, label in items %}
+                                        <option value="{{ value }}" {% if form.appliance.data == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div id="other-appliance-container" class="hidden">
+                        {{ form.other_appliance.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1") }}
+                        {{ form.other_appliance(class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white", placeholder="Enter appliance name") }}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            {{ form.watts.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1") }}
+                            <div class="relative">
+                                {{ form.watts(class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white", placeholder="e.g., 1500") }}
+                                <span class="absolute right-3 top-2.5 text-sm text-gray-500 dark:text-gray-400">W</span>
+                            </div>
+                        </div>
+                        <div>
+                            {{ form.hours.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1") }}
+                            <div class="relative">
+                                {{ form.hours(class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white", placeholder="e.g., 2.5") }}
+                                <span class="absolute right-3 top-2.5 text-sm text-gray-500 dark:text-gray-400">hrs</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        {{ form.date.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1") }}
+                        {{ form.date(class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white", max=current_date, value=current_date) }}
+                    </div>
+
+                    <button type="submit" class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Usage
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Filter & Export Data</h2>
+            <form method="GET" action="{{ url_for('main.dashboard') }}">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="month" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month</label>
+                            <input type="month" name="month" id="month" value="{{ request.args.get('month', '') }}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="filter-appliance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Appliance</label>
+                            <select name="appliance" id="filter-appliance" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white">
+                                <option value="">All Appliances</option>
+                                {% for group_name, items in grouped %}
+                                    {% if group_name %}
+                                        <optgroup label="{{ group_name }}">
+                                            {% for value, label in items %}
+                                                <option value="{{ value }}" {% if request.args.get('appliance') == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% else %}
+                                        {% for value, label in items %}
+                                            <option value="{{ value }}" {% if request.args.get('appliance') == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="filter-other-container" class="hidden">
+                        <label for="other-filter-appliance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Other Appliance</label>
+                        <input type="text" name="other_filter_appliance" id="other-filter-appliance" value="{{ request.args.get('other_filter_appliance', '') }}" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button type="submit" class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                            </svg>
+                            Apply Filter
+                        </button>
+                        <a href="{{ url_for('main.export_csv', month=request.args.get('month'), appliance=request.args.get('appliance'), other_filter_appliance=request.args.get('other_filter_appliance')) }}" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Export CSV
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cost Analysis Section -->
+<div id="cost-per-appliance" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Cost Analysis</h2>
+        <span class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+            Rate: ₵0.50/kWh
+        </span>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Appliance</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Energy (kWh)</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cost (₵)</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">% of Total</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {% if appliance_data %}
+                    {% set total_kwh = appliance_data|sum(attribute=1) %}
+                    {% for item in appliance_data %}
+                    {% set appliance, kwh, cost = item %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ appliance }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ "%.2f"|format(kwh) }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">₵{{ "%.2f"|format(cost) }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <div class="flex items-center gap-2">
+                                <span>{{ "%.1f"|format((kwh / total_kwh) * 100) }}%</span>
+                                <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full" style="width: {{ (kwh / total_kwh) * 100 }}%; background-color: {{ ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'][loop.index0 % 6] }}"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="bg-gray-50 dark:bg-gray-700 font-medium">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">Total</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ "%.2f"|format(total_kwh) }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">₵{{ "%.2f"|format(total_kwh * 0.5) }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">100%</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            No appliance data available
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    <!-- Energy Records Section -->
+    <div id="energy-records" class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Energy Usage Records</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Showing {{ energy_inputs|length }} records
+                    {% if request.args.get('month') or request.args.get('appliance') %}(filtered){% endif %}
+                </p>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+                <div class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    Total: {{ energy_inputs|sum(attribute='kwh')|round(2) }} kWh
+                </div>
+                <div class="px-3 py-1.5 rounded-lg bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    Cost: ₵{{ (energy_inputs|sum(attribute='kwh') * 0.5)|round(2) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Appliance</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Power</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Duration</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Energy</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for entry in energy_inputs %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ entry.date.strftime('%Y-%m-%d') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ entry.appliance }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ "%.2f"|format(entry.watts) }} W</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ "%.2f"|format(entry.hours) }} hrs</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ "%.2f"|format(entry.kwh) }} kWh</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            No records found. {% if request.args.get('month') or request.args.get('appliance') %}Try adjusting your filters.{% else %}Add your first appliance usage above.{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle other appliance field visibility
+    const applianceSelect = document.getElementById('appliance-select');
+    const otherContainer = document.getElementById('other-appliance-container');
+    
+    if (applianceSelect) {
+        applianceSelect.addEventListener('change', function() {
+            otherContainer.classList.toggle('hidden', this.value !== 'Other');
+        });
+
+        // Initialize on load
+        if (applianceSelect.value === 'Other') {
+            otherContainer.classList.remove('hidden');
+        }
+    }
+
+    // Same for filter
+    const filterAppliance = document.getElementById('filter-appliance');
+    const filterOtherContainer = document.getElementById('filter-other-container');
+    
+    if (filterAppliance) {
+        filterAppliance.addEventListener('change', function() {
+            filterOtherContainer.classList.toggle('hidden', this.value !== 'Other');
+        });
+
+        if (filterAppliance.value === 'Other') {
+            filterOtherContainer.classList.remove('hidden');
+        }
+    }
+
+    // Energy Tips Functionality
+    const TIPS = {{ tips|tojson|safe }};
+    const tipCard = document.getElementById("energy-tip-card");
+    const tipText = document.getElementById("tip-text");
+    const refreshBtn = document.getElementById("refresh-tip");
+    const closeBtn = document.getElementById("close-tip-card");
+
+    if (TIPS && TIPS.length > 0 && tipCard && tipText) {
+        let currentTipIndex = 0;
+        
+        function showTip(index) {
+            tipText.style.opacity = 0;
+            setTimeout(() => {
+                tipText.textContent = TIPS[index];
+                tipText.style.opacity = 1;
+            }, 250);
+        }
+        
+        function showNextTip() {
+            currentTipIndex = (currentTipIndex + 1) % TIPS.length;
+            showTip(currentTipIndex);
+        }
+        
+        // Show first tip
+        showTip(currentTipIndex);
+        
+        // Set up auto-rotation every 10 seconds
+        const tipInterval = setInterval(showNextTip, 10000);
+        
+        // Manual refresh
+        if (refreshBtn) {
+            refreshBtn.addEventListener("click", showNextTip);
+        }
+        
+        // Close button
+        if (closeBtn) {
+            closeBtn.addEventListener("click", () => {
+                tipCard.style.opacity = 0;
+                setTimeout(() => tipCard.style.display = "none", 300);
+                clearInterval(tipInterval);
+            });
+        }
+    }
+
+    // Announcements Modal Toggle
+    window.toggleAnnouncements = function() {
+        const modal = document.getElementById('announcements-modal');
+        modal.classList.toggle('hidden');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('announcements-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+
+    // Chart Colors for Light/Dark Mode
+    function getChartColors() {
+        const isDark = document.body.classList.contains('dark');
+        return {
+            background: isDark ? 'rgba(31, 41, 55, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            text: isDark ? 'rgba(229, 231, 235, 0.9)' : 'rgba(31, 41, 55, 0.9)',
+            grid: isDark ? 'rgba(55, 65, 81, 0.5)' : 'rgba(209, 213, 219, 0.5)',
+            point: isDark ? 'rgba(59, 130, 246, 0.8)' : 'rgba(37, 99, 235, 0.8)',
+            line: isDark ? 'rgba(59, 130, 246, 0.8)' : 'rgba(37, 99, 235, 0.8)',
+            fill: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)'
+        };
+    }
+
+    // Update charts when mode changes
+    function updateChartsForMode() {
+        const colors = getChartColors();
+        
+        if (dailyChart) {
+            dailyChart.options.scales.x.grid.color = colors.grid;
+            dailyChart.options.scales.y.grid.color = colors.grid;
+            dailyChart.update();
+        }
+        
+        if (monthlyChart) {
+            monthlyChart.options.scales.y.grid.color = colors.grid;
+            monthlyChart.update();
+        }
+    }
+
+    // Daily Usage Chart
+    const dailyLabels = {{ daily_usage.keys()|list|tojson|safe }};
+    const dailyData = {{ daily_usage.values()|list|tojson|safe }};
+    let dailyChart;
+    
+    if (dailyLabels.length && dailyData.length) {
+        const ctx = document.getElementById('dailyUsageChart');
+        if (ctx) {
+            const colors = getChartColors();
+            
+            dailyChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'kWh',
+                        data: dailyData,
+                        borderColor: colors.line,
+                        backgroundColor: colors.fill,
+                        borderWidth: 2,
+                        pointBackgroundColor: colors.point,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: colors.background,
+                            titleColor: colors.text,
+                            bodyColor: colors.text,
+                            borderColor: colors.grid,
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.text }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: colors.grid },
+                            ticks: { color: colors.text }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Appliance Breakdown Chart
+    const applianceLabels = {{ appliance_data|map(attribute=0)|list|tojson|safe }};
+    const applianceValues = {{ appliance_data|map(attribute=1)|list|tojson|safe }};
+    
+    if (applianceLabels.length && applianceValues.length) {
+        const ctx = document.getElementById('applianceChart');
+        if (ctx) {
+            const colors = getChartColors();
+            
+            new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: applianceLabels,
+                    datasets: [{
+                        data: applianceValues,
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(236, 72, 153, 0.8)'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: colors.text }
+                        },
+                        tooltip: {
+                            backgroundColor: colors.background,
+                            titleColor: colors.text,
+                            bodyColor: colors.text,
+                            borderColor: colors.grid,
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+    }
+
+    // Monthly Comparison Chart
+    const monthlyLabels = ["Previous Month", "Current Month"];
+    const monthlyValues = [
+    {{ prev_month_usage|default(0, true)|float }},
+    {{ monthly_usage_kwh|default(0, true)|float }}
+];
+    const safeMonthlyValues = monthlyValues.map(v => (typeof v === 'number' && !isNaN(v)) ? v : 0);
+
+    
+    const monthlyCtx = document.getElementById('monthlyChart');
+    if (monthlyCtx) {
+        const colors = getChartColors();
+        new Chart(monthlyCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'kWh',
+                    data: safeMonthlyValues,            
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(16, 185, 129, 0.8)'
+                    ],
+                    borderRadius: 8,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: colors.background,
+                        titleColor: colors.text,
+                        bodyColor: colors.text,
+                        borderColor: colors.grid,
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: colors.text }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: colors.grid },
+                        ticks: { color: colors.text }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.8; }
+    }
+    
+    .goal-progress {
+        background: linear-gradient(to right, #10B981, #34D399);
+    }
+    
+    .goal-progress-warning {
+        background: linear-gradient(to right, #F59E0B, #FBBF24);
+    }
+    
+    .goal-progress-danger {
+        background: linear-gradient(to right, #EF4444, #F87171);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    /* Smooth transitions for dark mode */
+    body, .bg-white, .bg-gray-100, .border-gray-200 {
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    
+    .text-gray-900, .text-gray-700, .text-gray-500 {
+        transition: color 0.3s ease;
+    }
+</style>
+{% endblock %}

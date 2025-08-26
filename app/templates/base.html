@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en"
+      x-data="{ sidebarOpen: window.innerWidth >= 768, sidebarMinimized: false }"
+      x-init="
+        // Close sidebar on ESC
+        window.addEventListener('keydown', e => { 
+          if (e.key === 'Escape') sidebarOpen = false 
+        });
+
+        // Handle sidebar minimized state (desktop only)
+        if (window.innerWidth >= 768) {
+          sidebarMinimized = localStorage.getItem('sidebarMinimized') === 'true';
+          sidebarOpen = true; // ✅ Force sidebar open on desktop
+        } else {
+          sidebarOpen = false; // ✅ Keep sidebar hidden by default on mobile
+        }
+
+        // Auto update sidebar visibility on resize
+        window.addEventListener('resize', () => {
+          if (window.innerWidth >= 768) {
+            sidebarOpen = true;  // ✅ Always show on desktop
+          } else {
+            sidebarOpen = false; // ✅ Always hide on mobile
+          }
+        });
+
+        // ✅ Initialize Alpine.js dark mode store
+        Alpine.store('darkMode', {
+          on: localStorage.getItem('darkMode') === 'true',
+          toggle() {
+            this.on = !this.on;
+            localStorage.setItem('darkMode', this.on);
+          }
+        });
+      "
+      :class="{ 'dark': $store.darkMode.on }"
+      class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Energy Consumption MonitoringApp{% endblock %}</title>
+
+
+    <!-- Standard favicons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/logo-16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/logo-32x32.png') }}">
+
+    <!-- Apple devices -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/logo-180x180.png') }}">
+
+    <!-- Android / Chrome -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='img/logo-192x192.png') }}">
+
+    <!-- Optional: SVG for modern browsers -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+
+    
+    <!-- Apple Touch Icon (for iOS) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/logo.png') }}">
+
+    <!-- Optional: Microsoft tile icon -->
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='img/logo.png') }}">
+    <meta name="msapplication-TileColor" content="#4361ee">
+
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+    <style>
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+{% if current_user.is_authenticated %}
+    <!-- Mobile overlay -->
+    <div x-show="sidebarOpen" @click="sidebarOpen = false"
+         class="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+         style="display: none;" aria-hidden="true"></div>
+
+    <!-- Sidebar -->
+  <aside id="sidebar"
+    x-cloak
+    class="fixed inset-y-0 left-0 bg-white dark:bg-gray-800 shadow-lg px-4 py-6
+           transform transition-all duration-300 ease-in-out z-30 flex flex-col
+           overflow-y-auto md:relative md:block md:sticky md:top-0 md:z-30"
+    :class="{
+        // ✅ Desktop - always visible
+        'translate-x-0': window.innerWidth >= 768,
+        
+        // ✅ Mobile - open when sidebarOpen is true
+        'translate-x-0 w-64': window.innerWidth < 768 && sidebarOpen,
+        
+        // ✅ Mobile - hidden when sidebarOpen is false
+        '-translate-x-full': window.innerWidth < 768 && !sidebarOpen,
+        
+        // ✅ Desktop width when expanded
+        'w-64': !sidebarMinimized && window.innerWidth >= 768,
+        
+        // ✅ Desktop width when minimized
+        'w-20': sidebarMinimized && window.innerWidth >= 768
+    }"
+    x-init="
+        // Ensure correct sidebar state on load
+        if (window.innerWidth >= 768) {
+            sidebarOpen = true; // ✅ Force sidebar visible on desktop
+        } else {
+            sidebarOpen = false; // ✅ Sidebar hidden by default on mobile
+        }
+
+        // Handle resize events
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                sidebarOpen = true;
+            } else {
+                sidebarOpen = false;
+            }
+        });
+    "
+    aria-label="Sidebar Navigation">
+
+
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Test Logo" class="w-20 h-20">
+   
+        <!-- Sidebar header with toggle button -->
+        <div class="flex items-center justify-between mb-6">
+            <!-- Logo + Title -->
+    <div class="flex items-center gap-2">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" 
+             alt="Energy Tracker Logo" class="w-10 h-10 rounded-full">
+        <h1 class="text-xl font-bold overflow-hidden transition-all duration-300" 
+            :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+            ⚡ Energy Consumption Tracker
+        </h1>
+    </div>
+            <!-- Minimize/Expand toggle button - hidden on mobile -->
+            <button @click="sidebarMinimized = !sidebarMinimized; localStorage.setItem('sidebarMinimized', sidebarMinimized);"
+                    class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors md:block hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path x-show="!sidebarMinimized" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <path x-show="sidebarMinimized" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            
+            <!-- Close button for mobile -->
+            <button @click="sidebarOpen = false" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors md:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Profile - hidden when minimized -->
+        <div class="flex flex-col items-center mb-6 overflow-hidden transition-all duration-300"
+             :class="(sidebarMinimized && window.innerWidth >= 768) ? 'h-0 opacity-0' : 'h-auto opacity-100'">
+            <a href="{{ url_for('main.profile') }}">
+                <img src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}"
+                     alt="Profile Picture" class="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />
+            </a>
+            <h2 class="mt-2 text-lg font-semibold text-center">{{ current_user.username }}</h2>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-1 text-sm font-medium flex-1" role="navigation">
+            <!-- Dashboard -->
+            <a href="{{ url_for('main.dashboard') }}" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 group relative"
+               @click="window.innerWidth < 768 ? sidebarOpen = false : null">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" />
+                </svg>
+                <span class="overflow-hidden transition-all duration-300" 
+                      :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                    Dashboard
+                </span>
+                <!-- Tooltip for minimized state -->
+                <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
+                    Dashboard
+                </span>
+            </a>
+
+            <!-- Usage submenu -->
+            <div x-data="{ open: window.innerWidth >= 768 ? false : true }" class="relative">
+                <button @click="open = !open"
+                        class="flex items-center justify-between w-full px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 group relative">
+                    <span class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span class="overflow-hidden transition-all duration-300" 
+                              :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                            Usage
+                        </span>
+                    </span>
+                    <svg :class="{ 'rotate-90': open }" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform transition-transform flex-shrink-0" 
+                         :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <!-- Tooltip for minimized state -->
+                    <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-mdz-50 whitespace-nowrap">
+                        Usage
+                    </span>
+                </button>
+                <div x-show="open" x-transition class="space-y-1 pl-8" :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" style="display: none;">
+                    <a href="{{ url_for('main.dashboard') }}#add-usage-form" 
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">Add Usage</a>
+                    <a href="{{ url_for('main.dashboard') }}#cost-per-appliance" 
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">Cost Analysis</a>
+                    <a href="{{ url_for('main.dashboard') }}#energy-records" 
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">View Records</a>   
+                </div>
+            </div>
+
+            <!-- Goals submenu -->
+            <div x-data="{ open: window.innerWidth >= 768 ? false : true }" class="relative">
+                <button @click="open = !open"
+                        class="flex items-center justify-between w-full px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 group relative">
+                    <span class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <span class="overflow-hidden transition-all duration-300" 
+                              :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                            Goals
+                        </span>
+                    </span>
+                    <svg :class="{ 'rotate-90': open }" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform transition-transform flex-shrink-0" 
+                         :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <!-- Tooltip for minimized state -->
+                    <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
+                        Goals
+                    </span>
+                </button>
+                <div x-show="open" x-transition class="space-y-1 pl-8" :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" style="display: none;">
+                    <a href="{{ url_for('main.dashboard') }}#goal-section" 
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">Manage Goals</a>
+                    <a href="{{ url_for('main.dashboard') }}#goal-progress" 
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">Progress Tracking</a>
+                </div>
+            </div>
+
+            <!-- Charts submenu -->
+            <div x-data="{ open: window.innerWidth >= 768 ? false : true }" class="relative">
+                <button @click="open = !open"
+                        class="flex items-center justify-between w-full px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 group relative">
+                    <span class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 11h3v7H2v-7zm6-4h3v11H8V7zm6-8h3v19h-3V1z"/>
+
+                        </svg>
+                        <span class="overflow-hidden transition-all duration-300" 
+                              :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                            Charts
+                        </span>
+                    </span>
+                    <svg :class="{ 'rotate-90': open }" xmlns="http://www.w.org/2000/svg" class="h-4 w-4 transform transition-transform flex-shrink-0" 
+                         :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <!-- Tooltip for minimized state -->
+                    <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
+                        Charts
+                    </span>
+                </button>
+                <div x-show="open" x-transition class="space-y-1 pl-8" :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" style="display: none;">
+                    <a href="{{ url_for('main.dashboard') }}#daily-chart-section"
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">Daily Usage</a>
+
+                    <a href="{{ url_for('main.dashboard') }}#monthly-chart-section"
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">Monthly Comparison</a>
+
+                    <a href="{{ url_for('main.dashboard') }}#breakdown-chart-section"
+                       class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                       @click="sidebarOpen = false">Usage Breakdown</a>
+                </div>
+            </div>
+
+            <!-- Export CSV -->
+            <a href="{{ url_for('main.export_csv') }}" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 group relative"
+               @click="window.innerWidth < 768 ? sidebarOpen = false : null">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span class="overflow-hidden transition-all duration-300" 
+                      :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                    Export CSV
+                </span>
+                <!-- Tooltip for minimized state -->
+                <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
+                    Export CSV
+                </span>
+            </a>
+
+            <!-- Profile -->
+            <a href="{{ url_for('main.profile') }}" class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 group relative"
+               @click="window.innerWidth < 768 ? sidebarOpen = false : null">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4.992 4.992 0 0012 21a4.992 4.992 0 006.879-3.196M12 7a4 4 0 100-8 4 4 0 000 8z" />
+                </svg>
+                <span class="overflow-hidden transition-all duration-300" 
+                      :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                    Profile
+                </span>
+                <!-- Tooltip for minimized state -->
+                <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
+                    Profile
+                </span>
+            </a>
+
+            <!-- Dark mode toggle -->
+            <button @click="$store.darkMode.toggle()"
+                    class="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 w-full text-left group relative">
+                <template x-if="$store.darkMode.on">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293a8 8 0 01-11.586-11.586A8 8 0 1017.293 13.293z" />
+                    </svg>
+                </template>
+                <template x-if="!$store.darkMode.on">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-11.66l-.707.707M4.05 19.95l-.707.707M21 12h-1M4 12H3m15.66 5.66l-.707-.707M6.34 6.34l-.707-.707" />
+                    </svg>
+                </template>
+                <span class="overflow-hidden transition-all duration-300" 
+                      :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'"
+                      x-text="$store.darkMode.on ? 'Light Mode' : 'Dark Mode'"></span>
+                <!-- Tooltip for minimized state -->
+                <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
+                    <template x-if="$store.darkMode.on">Light Mode</template>
+                    <template x-if="!$store.darkMode.on">Dark Mode</template>
+                </span>
+            </button>
+
+            <!-- Logout -->
+            <a href="{{ url_for('main.logout') }}" class="flex items-center gap-3 px-3 py-2 rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800 group relative"
+               @click="window.innerWidth < 768 ? sidebarOpen = false : null">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7" />
+
+                </svg>
+                <span class="overflow-hidden transition-all duration-300" 
+                      :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
+                    Logout
+                </span>
+                <!-- Tooltip for minimized state -->
+                <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
+                    Logout
+                </span>
+            </a>
+        </nav>
+    </aside>
+{% endif %}
+
+<!-- Main content area -->
+<div class="flex-1 flex flex-col overflow-y-auto transition-all duration-300 w-full"
+     :class="{
+        // ✅ Desktop minimized sidebar
+        'md:ml-20': sidebarMinimized && window.innerWidth >= 768, 
+        
+        // ✅ Desktop expanded sidebar
+        'md:ml-64': !sidebarMinimized && window.innerWidth >= 768, 
+        
+        // ✅ Mobile - no margin
+        'ml-0': window.innerWidth < 768
+     }">
+
+
+    <!-- Mobile header -->
+    <header class="bg-white dark:bg-gray-800 shadow px-4 py-4 flex justify-between items-center md:hidden">
+        <h1 class="text-xl font-bold">⚡ Energy Tracker</h1>
+        <button @click="sidebarOpen = !sidebarOpen" class="text-gray-600 dark:text-gray-300">
+            <template x-if="!sidebarOpen">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </template>
+            <template x-if="sidebarOpen">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </template>
+        </button>
+    </header>
+
+    <!-- Page content -->
+    <main class="flex-grow px-4 md:px-6 py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 text-center py-4 text-sm">
+        &copy; {{ current_year }} Energy Consumption Monitoring App. All rights reserved.
+    </footer>
+</div>
+
+
+    <!-- Smooth scrolling script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enhanced smooth scrolling for all anchor links
+            document.querySelectorAll('a[href*="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    const isDashboardLink = href.startsWith("{{ url_for('main.dashboard') }}");
+                    
+                    // Only prevent default if we're staying on the same page
+                    if (window.location.pathname === "{{ url_for('main.dashboard') }}" && href.includes('#')) {
+                        e.preventDefault();
+                        const hash = href.split('#')[1];
+                        const target = document.getElementById(hash);
+                        
+                        if (target) {
+                            // Close mobile sidebar if open
+                            if (window.innerWidth < 768) {
+                                Alpine.store('sidebarOpen', false);
+                            }
+                            
+                            target.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                            });
+                            
+                            // Update URL without page reload
+                            history.pushState(null, null, '#' + hash);
+                        }
+                    }
+                });
+            });
+            
+            // Handle initial page load with hash
+            if (window.location.hash) {
+                const target = document.querySelector(window.location.hash);
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                }
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                // On mobile, ensure sidebar is closed when switching to desktop
+                if (window.innerWidth >= 768) {
+                    Alpine.store('sidebarOpen', false);
+                }
+            });
+        });
+    </script>
+
+    <script>
+    // Prevent error if $store.darkMode is undefined
+    window.Alpine = window.Alpine || {};
+    if (!window.Alpine.store) {
+        window.Alpine.store = () => ({ darkMode: { on: false } });
+    }
+</script>
+
+
+     <!-- AlpineJS -->
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</body>
+</html> 

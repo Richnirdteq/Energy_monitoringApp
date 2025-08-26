@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Profile - Energy Tracker{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+        <i class="fas fa-user-circle mr-2"></i>User Profile
+    </h2>
+    
+    <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+        <div class="relative group">
+            <img src="{{ image_file }}" 
+                 alt="Profile Image" 
+                 class="w-32 h-32 rounded-full object-cover border-4 border-green-500 shadow-lg">
+            <div class="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="text-white text-sm font-medium">Change Photo</span>
+            </div>
+        </div>
+
+        <div class="text-left space-y-3 w-full">
+            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <p class="text-lg text-gray-700 dark:text-gray-300">
+                    <i class="fas fa-user mr-2"></i><strong>Username:</strong> {{ user.username }}
+                </p>
+                <p class="text-lg text-gray-700 dark:text-gray-300 mt-2">
+                    <i class="fas fa-envelope mr-2"></i><strong>Email:</strong> {{ user.email }}
+                </p>
+                <p class="text-lg text-gray-700 dark:text-gray-300 mt-2">
+                    <i class="fas fa-bolt mr-2"></i><strong>Monthly Goal:</strong> 
+                    {% if user.monthly_goal %}
+                        {{ user.monthly_goal }} kWh
+                    {% else %}
+                        <span class="text-gray-500">Not set</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <i class="fas fa-camera mr-2"></i>Update Profile Picture
+            </label>
+            <div class="mt-1 flex items-center">
+                {{ form.picture(class="block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-green-100 file:text-green-700
+                                hover:file:bg-green-200
+                                dark:file:bg-gray-600 dark:file:text-gray-100
+                                dark:hover:file:bg-gray-500") }}
+            </div>
+            {% if form.picture.errors %}
+                <div class="mt-2 text-sm text-red-600">
+                    {% for error in form.picture.errors %}
+                        <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                PNG, JPG up to 2MB
+            </p>
+        </div>
+
+        <div class="flex space-x-4 pt-4">
+            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center">
+                <i class="fas fa-save mr-2"></i>Save Changes
+            </button>
+            <a href="{{ url_for('main.dashboard') }}"
+               class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

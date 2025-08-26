@@ -1,0 +1,42 @@
+# === Python / Flask ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+instance/
+*.log
+
+# === Virtual Environment ===
+venv/
+ENV/
+.env
+*.env
+
+# === Node & Tailwind ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === Build & Compiled Files ===
+dist/
+build/
+static/css/
+static/js/
+*.lock
+
+# === Flask Migrations ===
+migrations/versions/*.py
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+
+# === OS / Cache ===
+.DS_Store
+Thumbs.db
+
+# === User Uploads (Optional) ===
+uploads/
