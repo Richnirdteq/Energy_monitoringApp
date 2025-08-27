@@ -222,7 +222,8 @@ def reset_password(token):
 
     return render_template("reset_password.html", form=form)
 
-@main.route('/logout')
+@main.route('/logout', methods=['POST'])
+@login_required
 def logout():
     logout_user()
     session.pop('guest', None)
