@@ -4,7 +4,7 @@ import webbrowser
 from threading import Timer
 
 # Change to production for deployment
-app = create_app("production")  # ✅ Use production, not development
+app = create_app("production")  # ✅ Use production
 
 def open_browser():
     # Optional: Only open browser on laptop, not phone
