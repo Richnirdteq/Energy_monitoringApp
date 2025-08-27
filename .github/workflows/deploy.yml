@@ -1,0 +1,53 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ testing ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Create .env file from secrets
+      run: |
+        cat > .env << EOF
+        SECRET_KEY=${{ secrets.SECRET_KEY }}
+        SECURITY_PASSWORD_SALT=${{ secrets.SECURITY_PASSWORD_SALT }}
+        DATABASE_URL=${{ secrets.DATABASE_URL }}
+        MAIL_SERVER=${{ secrets.MAIL_SERVER }}
+        MAIL_PORT=${{ secrets.MAIL_PORT }}
+        MAIL_USE_TLS=${{ secrets.MAIL_USE_TLS }}
+        MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+        MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+        FLASK_ENV=${{ secrets.FLASK_ENV }}
+        EOF
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/energy-monitoring-app:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy Docker image to Render
+      run: |
+        curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "imageUrl": "${{ secrets.DOCKERHUB_USERNAME }}/energy-monitoring-app:latest"
+          }'
