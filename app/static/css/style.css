@@ -1,9 +1,13 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
     margin: 0;
     padding: 0;
+}
+
+/* Light mode styles */
+body {
+    background-color: #f8f9fa;
+    color: #333;
 }
 
 .container {
@@ -23,6 +27,39 @@ body {
   border-radius: 15px;
   box-shadow: 0 0 10px #ccc;
   text-align: center;
+}
+
+/* Dark mode styles */
+.dark body {
+    background-color: #111827;
+    color: #f9fafb;
+}
+
+.dark .container {
+    background: #1f2937;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.dark .form-container {
+    background: #1f2937;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    color: #f9fafb;
+}
+
+/* Force title to be white in dark mode */
+.dark h1 {
+    color: white !important;
+}
+
+/* Force sidebar to be dark in dark mode */
+.dark #sidebar {
+    background-color: #1f2937 !important;
+}
+
+/* Force all cards and containers to be dark in dark mode */
+.dark .bg-white {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
 }
 
 .avatar {
