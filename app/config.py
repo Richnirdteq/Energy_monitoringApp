@@ -14,7 +14,7 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # File uploads
-    UPLOAD_FOLDER = os.path.join("app", "static", "uploads")
+    UPLOAD_FOLDER = "static/profile_pics"
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 class DevelopmentConfig(BaseConfig):

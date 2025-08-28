@@ -5,7 +5,7 @@ from .extension import db
 from itsdangerous import URLSafeTimedSerializer
 from flask import current_app
 
-DEFAULT_PROFILE_IMG = 'default.png'
+DEFAULT_PROFILE_IMG = 'avatar.png'
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -13,7 +13,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(512), nullable=False)
     monthly_goal = db.Column(db.Float, nullable=True)
-    profile_image = db.Column(db.String(120), nullable=True, default='default.png')
+    profile_image = db.Column(db.String(120), nullable=True, default='avatar.png')
 
     # Token generation for password reset
     def get_reset_token(self, expires_sec=1800):

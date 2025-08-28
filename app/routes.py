@@ -85,8 +85,7 @@ def save_profile_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
-    upload_folder = current_app.config['UPLOAD_FOLDER']  # should be 'app/static/uploads'
-    picture_path = os.path.join(current_app.root_path, upload_folder, picture_fn)
+    picture_path = os.path.join(current_app.root_path, 'static', 'profile_pics', picture_fn)
     os.makedirs(os.path.dirname(picture_path), exist_ok=True)
     output_size = (125, 125)
     img = Image.open(form_picture)
@@ -238,10 +237,10 @@ def profile():
         if form.picture.data:
             try:
                 # Delete old profile pic if not default
-                if current_user.profile_image != 'default.png':
+                if current_user.profile_image and current_user.profile_image not in ['default.png', 'avatar.png']:
                     old_pic_path = os.path.join(
                         current_app.root_path, 
-                        'app', 'static', 'uploads', 
+                        'static', 'profile_pics', 
                         current_user.profile_image
                     )
                     if os.path.exists(old_pic_path):
@@ -258,7 +257,13 @@ def profile():
             
             return redirect(url_for('main.profile'))
 
-    image_file = url_for('static', filename='uploads/' + current_user.profile_image)
+    # Handle profile image with fallback
+    if current_user.profile_image and current_user.profile_image not in ['default.png', 'avatar.png']:
+        image_file = url_for('static', filename='profile_pics/' + current_user.profile_image)
+    else:
+        # Use avatar.png from img folder as default
+        image_file = url_for('static', filename='img/avatar.png')
+    
     return render_template('profile.html', 
                          form=form, 
                          image_file=image_file, 

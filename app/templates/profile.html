@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_clean.html' %}
 {% block title %}Profile - Energy Tracker{% endblock %}
 
 {% block content %}
@@ -42,37 +42,29 @@
         
         <div class="form-group">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <i class="fas fa-camera mr-2"></i>Update Profile Picture
+                Update Profile Picture
             </label>
-            <div class="mt-1 flex items-center">
-                {{ form.picture(class="block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-green-100 file:text-green-700
-                                hover:file:bg-green-200
-                                dark:file:bg-gray-600 dark:file:text-gray-100
-                                dark:hover:file:bg-gray-500") }}
+            <div class="mt-1">
+                {{ form.picture(class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200") }}
             </div>
             {% if form.picture.errors %}
                 <div class="mt-2 text-sm text-red-600">
                     {% for error in form.picture.errors %}
-                        <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                        <p>{{ error }}</p>
                     {% endfor %}
                 </div>
             {% endif %}
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                PNG, JPG up to 2MB
+                PNG, JPG, JPEG up to 2MB
             </p>
         </div>
 
         <div class="flex space-x-4 pt-4">
-            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center">
-                <i class="fas fa-save mr-2"></i>Save Changes
+            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
+                Save Changes
             </button>
-            <a href="{{ url_for('main.dashboard') }}"
-               class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+            <a href="{{ url_for('main.dashboard') }}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">
+                Back to Dashboard
             </a>
         </div>
     </form>
