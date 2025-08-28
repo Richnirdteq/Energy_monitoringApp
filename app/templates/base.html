@@ -124,8 +124,8 @@
         <div class="flex items-center justify-between mb-6">
             <!-- Logo + Title -->
     <div class="flex items-center gap-2">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" 
-             alt="Energy Tracker Logo" class="w-10 h-10 rounded-full">
+        <!-- <img src="{{ url_for('static', filename='img/logo.png') }}" 
+             alt="Energy Tracker Logo" class="w-10 h-10 rounded-full"> -->
         <h1 class="text-xl font-bold text-gray-900 dark:text-white overflow-hidden transition-all duration-300" 
             :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
             ⚡ Energy Consumption Tracker
@@ -149,14 +149,14 @@
         </div>
 
         <!-- Profile - hidden when minimized -->
-        <div class="flex flex-col items-center mb-6 overflow-hidden transition-all duration-300"
+        <!-- <div class="flex flex-col items-center mb-6 overflow-hidden transition-all duration-300"
              :class="(sidebarMinimized && window.innerWidth >= 768) ? 'h-0 opacity-0' : 'h-auto opacity-100'">
             <a href="{{ url_for('main.profile') }}">
                 <img src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}"
                      alt="Profile Picture" class="w-20 h-20 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />
             </a>
             <h2 class="mt-2 text-lg font-semibold text-center text-gray-900 dark:text-white">{{ current_user.username }}</h2>
-        </div>
+        </div> -->
 
         <!-- Navigation -->
         <nav class="space-y-1 text-sm font-medium flex-1" role="navigation">
