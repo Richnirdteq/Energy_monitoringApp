@@ -143,14 +143,14 @@
                     <path x-show="!sidebarMinimized" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     <path x-show="sidebarMinimized" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-            </button>
+            
             
             <!-- Close button for mobile -->
             <button @click="sidebarOpen = false" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors md:hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-            </button>
+            
         </div>
 
         <!-- Profile - hidden when minimized -->
@@ -193,7 +193,9 @@
                               :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
                             Usage
                         </span>
+                </a>
                     </span>
+                </a>
                     <svg :class="{ 'rotate-90': open }" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform transition-transform flex-shrink-0" 
                          :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -202,7 +204,8 @@
                     <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-mdz-50 whitespace-nowrap">
                         Usage
                     </span>
-                </button>
+                </a>
+                
                 <div x-show="open" x-transition class="space-y-1 pl-8" :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" style="display: none;">
                     <a href="{{ url_for('main.dashboard') }}#add-usage-form" 
                        class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -228,7 +231,9 @@
                               :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
                             Goals
                         </span>
+                </a>
                     </span>
+                </a>
                     <svg :class="{ 'rotate-90': open }" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform transition-transform flex-shrink-0" 
                          :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -237,7 +242,8 @@
                     <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
                         Goals
                     </span>
-                </button>
+                </a>
+                
                 <div x-show="open" x-transition class="space-y-1 pl-8" :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" style="display: none;">
                     <a href="{{ url_for('main.dashboard') }}#goal-section" 
                        class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -261,7 +267,9 @@
                               :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
                             Charts
                         </span>
+                </a>
                     </span>
+                </a>
                     <svg :class="{ 'rotate-90': open }" xmlns="http://www.w.org/2000/svg" class="h-4 w-4 transform transition-transform flex-shrink-0" 
                          :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -270,7 +278,8 @@
                     <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
                         Charts
                     </span>
-                </button>
+                </a>
+                
                 <div x-show="open" x-transition class="space-y-1 pl-8" :class="(sidebarMinimized && window.innerWidth >= 768) ? 'hidden' : ''" style="display: none;">
                     <a href="{{ url_for('main.dashboard') }}#daily-chart-section"
                        class="block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -340,11 +349,10 @@
                     <template x-if="!$store.darkMode.on">Dark Mode</template>
                 </span>
             </button>
-
+            
            <!-- Logout -->
-            <form action="{{ url_for('main.logout') }}" method="POST" class="inline flex items-center gap-3 px-3 py-2 rounded hover:bg-red-100 dark:hover:bg-red-800">
-                {{ csrf_token() }}
-                <button type="submit" class="flex items-center gap-3 text-red-600 dark:text-red-400 w-full">
+            <a href="{{ url_for('main.logout') }}" class="flex items-center gap-3 px-3 py-2 mt-2 rounded hover:bg-red-100 dark:hover:bg-red-800 text-red-600 dark:text-red-400">
+                
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7" />
                     </svg>
@@ -352,8 +360,9 @@
                         :class="(sidebarMinimized && window.innerWidth >= 768) ? 'w-0 opacity-0' : 'w-auto opacity-100'">
                         Logout
                     </span>
-                </button>
-            </form>
+                </a>
+                
+            
 
                 <!-- Tooltip for minimized state -->
                 <span x-show="sidebarMinimized && window.innerWidth >= 768" class="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50 whitespace-nowrap">
@@ -392,7 +401,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </template>
-        </button>
+        
     </header>
 
     <!-- Page content -->
@@ -464,12 +473,23 @@
     // Prevent error if $store.darkMode is undefined
     window.Alpine = window.Alpine || {};
     if (!window.Alpine.store) {
-        window.Alpine.store = () => ({ darkMode: { on: false } });
+        window.
     }
 </script>
 
 
      <!-- AlpineJS -->
+<script>
+    document.addEventListener("alpine:init", () => {
+        Alpine.store("darkMode", {
+            on: localStorage.getItem("darkMode") === "true",
+            toggle() {
+                this.on = !this.on;
+                localStorage.setItem("darkMode", this.on);
+            }
+        });
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>
 </html> 
